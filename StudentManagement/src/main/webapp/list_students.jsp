@@ -1,123 +1,154 @@
-<%-- 
-    Document   : list_students
-    Created on : Nov 8, 2025, 2:19:42 PM
-    Author     : THIS PC
---%>
-
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ page import="java.sql.*" %>
-<%@ page import="java.util.ArrayList" %>
-<%@ page import="java.util.List" %>
-<%@ page import="com.SM.Student" %>
-<%-- Assuming the Student model class is located in com.yourcompany.model --%>
-
-<%!
-// Define JDBC Connection Constants (REPLACE with your actual DB info)
-private final String JDBC_URL = "jdbc:mysql://localhost:3306/student_db";
-private final String JDBC_USER = "root";
-private final String JDBC_PASSWORD = "Tienanh0108!";
-private final String QUERY_ALL = "SELECT id, student_code, full_name, email, major, created_at FROM students";
-
-// Utility function to close database resources
-private void closeResources(ResultSet rs, Statement stmt, Connection conn) {
-    try {
-        if (rs != null) rs.close();
-        if (stmt != null) stmt.close();
-        if (conn != null) conn.close();
-    } catch (SQLException e) {
-        // Log error while closing
-        System.err.println("Error closing database resources: " + e.getMessage());
-    }
-}
-%>
-
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
     <title>Student List</title>
     <style>
-        table { border-collapse: collapse; width: 80%; margin: 20px auto; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background-color: #f2f2f2; }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        h1 { color: #333; }
+        .message {
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            margin-bottom: 20px;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: white;
+        }
+        th {
+            background-color: #007bff;
+            color: white;
+            padding: 12px;
+            text-align: left;
+        }
+        td {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        tr:hover { background-color: #f8f9fa; }
+        .action-link {
+            color: #007bff;
+            text-decoration: none;
+            margin-right: 10px;
+        }
+        .delete-link { color: #dc3545; }
     </style>
 </head>
 <body>
-    <h2 style="text-align: center;">Student Management</h2>
-
-    <%
+    <h1>📚 Student Management System</h1>
+    
+    <% if (request.getParameter("message") != null) { %>
+        <div class="message success">
+            <%= request.getParameter("message") %>
+        </div>
+    <% } %>
+    
+    <% if (request.getParameter("error") != null) { %>
+        <div class="message error">
+            <%= request.getParameter("error") %>
+        </div>
+    <% } %>
+    
+    <a href="add_student.jsp" class="btn">➕ Add New Student</a>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Student Code</th>
+                <th>Full Name</th>
+                <th>Email</th>
+                <th>Major</th>
+                <th>Created At</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+<%
     Connection conn = null;
     Statement stmt = null;
     ResultSet rs = null;
-    List<Student> studentList = new ArrayList<>();
-    String errorMessage = null;
-
+    
     try {
-        // 1. Database Connection (JDBC)
-        Class.forName("com.mysql.cj.jdbc.Driver"); // Load the JDBC Driver
-        conn = DriverManager.getConnection(JDBC_URL, JDBC_USER, JDBC_PASSWORD);
+        Class.forName("com.mysql.cj.jdbc.Driver");
         
-        // 2. Query all students
+        conn = DriverManager.getConnection(
+            "jdbc:mysql://localhost:3306/student_management",
+            "root",
+            "Tienanh0108!"
+        );
+        
         stmt = conn.createStatement();
-        rs = stmt.executeQuery(QUERY_ALL);
-
-        // 3. Process ResultSet and map to Student objects
+        String sql = "SELECT * FROM students ORDER BY id DESC";
+        rs = stmt.executeQuery(sql);
+        
         while (rs.next()) {
-            Student student = new Student();
-            student.setId(rs.getInt("id"));
-            student.setStudentCode(rs.getString("student_code"));
-            student.setFullName(rs.getString("full_name"));
-            student.setEmail(rs.getString("email"));
-            student.setMajor(rs.getString("major"));
-            student.setCreatedAt(rs.getTimestamp("created_at"));
-            studentList.add(student);
+            int id = rs.getInt("id");
+            String studentCode = rs.getString("student_code");
+            String fullName = rs.getString("full_name");
+            String email = rs.getString("email");
+            String major = rs.getString("major");
+            Timestamp createdAt = rs.getTimestamp("created_at");
+%>
+            <tr>
+                <td><%= id %></td>
+                <td><%= studentCode %></td>
+                <td><%= fullName %></td>
+                <td><%= email != null ? email : "N/A" %></td>
+                <td><%= major != null ? major : "N/A" %></td>
+                <td><%= createdAt %></td>
+                <td>
+                    <a href="edit_student.jsp?id=<%= id %>" class="action-link">✏️ Edit</a>
+                    <a href="delete_student.jsp?id=<%= id %>" 
+                       class="action-link delete-link"
+                       onclick="return confirm('Are you sure?')">🗑️ Delete</a>
+                </td>
+            </tr>
+<%
         }
-
     } catch (ClassNotFoundException e) {
-        errorMessage = "Error: JDBC Driver not found. Please check your Maven dependency.";
-        System.err.println(errorMessage + ": " + e.getMessage());
+        out.println("<tr><td colspan='7'>Error: JDBC Driver not found!</td></tr>");
+        e.printStackTrace();
     } catch (SQLException e) {
-        // Handle database errors gracefully
-        errorMessage = "Database Connection/Query Error: " + e.getMessage();
-        System.err.println(errorMessage);
+        out.println("<tr><td colspan='7'>Database Error: " + e.getMessage() + "</td></tr>");
+        e.printStackTrace();
     } finally {
-        // 4. Close all database resources properly
-        closeResources(rs, stmt, conn);
+        try {
+            if (rs != null) rs.close();
+            if (stmt != null) stmt.close();
+            if (conn != null) conn.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
-    %>
-
-    <% if (errorMessage != null) { %>
-        <p style="color: red; text-align: center;">
-            Error: <%= errorMessage %>
-        </p>
-    <% } else if (studentList.isEmpty()) { %>
-        <p style="text-align: center;">No students found in the database.</p>
-    <% } else { %>
-        <table>
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Student Code</th>
-                    <th>Full Name</th>
-                    <th>Email</th>
-                    <th>Major</th>
-                    <th>Created At</th>
-                </tr>
-            </thead>
-            <tbody>
-                <% for (Student student : studentList) { %>
-                    <tr>
-                        <td><%= student.getId() %></td>
-                        <td><%= student.getStudentCode() %></td>
-                        <td><%= student.getFullName() %></td>
-                        <td><%= student.getEmail() %></td>
-                        <td><%= student.getMajor() %></td>
-                        <td><%= student.getCreatedAt() %></td>
-                    </tr>
-                <% } %>
-            </tbody>
-        </table>
-    <% } %>
-
+%>
+        </tbody>
+    </table>
 </body>
 </html>
