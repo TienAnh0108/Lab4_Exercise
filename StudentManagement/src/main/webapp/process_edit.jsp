@@ -5,47 +5,59 @@
     String fullName = request.getParameter("full_name");
     String email = request.getParameter("email");
     String major = request.getParameter("major");
-    
+
     if (idParam == null || fullName == null || fullName.trim().isEmpty()) {
         response.sendRedirect("list_students.jsp?error=Invalid data");
         return;
     }
-    
+
+    if (email != null && !email.trim().isEmpty()) {
+        String emailRegex = "^[a-zA-Z0-9+._-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"; 
+        if (!email.matches(emailRegex)) { 
+            response.sendRedirect("add_student.jsp?error=Invalid email format");
+            return;
+        }
+    }
+
     int studentId = Integer.parseInt(idParam);
-    
+
     Connection conn = null;
     PreparedStatement pstmt = null;
-    
+
     try {
         Class.forName("com.mysql.cj.jdbc.Driver");
         conn = DriverManager.getConnection(
-            "jdbc:mysql://localhost:3306/student_management",
-            "root",
-            "Tienanh0108!"
+                "jdbc:mysql://localhost:3306/student_management",
+                "root",
+                "Tienanh0108!"
         );
-        
+
         String sql = "UPDATE students SET full_name = ?, email = ?, major = ? WHERE id = ?";
         pstmt = conn.prepareStatement(sql);
         pstmt.setString(1, fullName);
         pstmt.setString(2, email);
         pstmt.setString(3, major);
         pstmt.setInt(4, studentId);
-        
+
         int rowsAffected = pstmt.executeUpdate();
-        
+
         if (rowsAffected > 0) {
             response.sendRedirect("list_students.jsp?message=Student updated successfully");
         } else {
             response.sendRedirect("edit_student.jsp?id=" + studentId + "&error=Update failed");
         }
-        
+
     } catch (Exception e) {
         response.sendRedirect("edit_student.jsp?id=" + studentId + "&error=Error occurred");
         e.printStackTrace();
     } finally {
         try {
-            if (pstmt != null) pstmt.close();
-            if (conn != null) conn.close();
+            if (pstmt != null) {
+                pstmt.close();
+            }
+            if (conn != null) {
+                conn.close();
+            }
         } catch (SQLException e) {
             e.printStackTrace();
         }
