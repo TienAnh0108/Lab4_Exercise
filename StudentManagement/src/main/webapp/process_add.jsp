@@ -19,6 +19,12 @@
             return;
         }
     }
+    
+    String codeRegex = "[A-Z]{2}[0-9]{3,}";
+    if (!studentCode.matches(codeRegex)) {
+        response.sendRedirect("add_student.jsp?error=Invalid Student Code format. Must be 2 uppercase letters followed by at least 3 digits (e.g., SV001).");
+        return;
+    }
 
     Connection conn = null;
     PreparedStatement pstmt = null;

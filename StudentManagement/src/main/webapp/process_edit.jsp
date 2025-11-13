@@ -5,6 +5,7 @@
     String fullName = request.getParameter("full_name");
     String email = request.getParameter("email");
     String major = request.getParameter("major");
+    String studentCode = request.getParameter("student_code");
 
     if (idParam == null || fullName == null || fullName.trim().isEmpty()) {
         response.sendRedirect("list_students.jsp?error=Invalid data");
@@ -19,6 +20,14 @@
         }
     }
 
+    if (studentCode != null) {
+        String codeRegex = "[A-Z]{2}[0-9]{3,}";
+        if (!studentCode.matches(codeRegex)) {
+            response.sendRedirect("edit_student.jsp?id=" + idParam + "&error=Invalid Student Code format. Must be 2 uppercase letters followed by at least 3 digits (e.g., SV001).");
+            return;
+        }
+    }
+    
     int studentId = Integer.parseInt(idParam);
 
     Connection conn = null;
