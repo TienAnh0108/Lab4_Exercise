@@ -146,12 +146,9 @@
                     String sql;
                     boolean isSearching = false;
 
-                    // Check if keyword is present and not empty/whitespace
                     if (keyword != null && !keyword.trim().isEmpty()) {
                         isSearching = true;
-                        // Search query with LIKE operator
-                        // Use UPPER/LOWER for case-insensitive search (DB dependent)
-                        sql = "SELECT * FROM students WHERE UPPER(full_name) LIKE ? OR UPPER(student_code) LIKE ?";
+                        sql = "SELECT * FROM students WHERE UPPER(full_name) LIKE ? OR UPPER(student_code) LIKE ? OR UPPER(major) LIKE ?";
                     } else {
                         // Normal query
                         sql = "SELECT * FROM students ORDER BY id DESC";
@@ -169,10 +166,11 @@
                         pstmt = conn.prepareStatement(sql);
 
                         if (isSearching) {
-                            // Set parameters for PreparedStatement
                             String searchParam = "%" + keyword.toUpperCase() + "%";
-                            pstmt.setString(1, searchParam); // for full_name
-                            pstmt.setString(2, searchParam); // for student_code
+
+                            pstmt.setString(1, searchParam);
+                            pstmt.setString(2, searchParam);
+                            pstmt.setString(3, searchParam);
                         }
 
                         rs = pstmt.executeQuery(); // Execute the query
